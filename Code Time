@@ -1,0 +1,58 @@
+#include <Servo.h>
+#include <avr/sleep.h>
+//basic defining of pins and const. 
+const int soilMoisturePin = A0;
+const int thresholdPotPin = A1;
+const int pumpPin = 9;
+Servo servoMotor;
+
+void setup() {
+  pinMode(soilMoisturePin, INPUT);
+  pinMode(thresholdPotPin, INPUT);
+  pinMode(pumpPin, OUTPUT);
+  servoMotor.attach(10);
+  Serial.begin(9600); //baudrate defining can be altered upon the transfer of bits 
+
+}
+
+void loop() {
+  // Read potentiometer to set soil moisture threshold
+  int threshold = map(analogRead(thresholdPotPin), 0, 1023, 0, 100);
+
+  // Reading soil moisture pin
+  int soilMoisture = analogRead(soilMoisturePin);
+
+  if (soilMoisture < threshold) {
+    startWatering();
+  }
+
+  // calling the sleepmode method/function 
+  enterSleepMode();
+}
+
+void startWatering() {
+  // pump On
+  digitalWrite(pumpPin, HIGH);
+  servoMotor.write(90);
+  delay(5000); // Watering duration
+
+  // pump Off
+  digitalWrite(pumpPin, LOW);
+  servoMotor.write(0);
+}
+
+void enterSleepMode() {
+  // to reduce power consumption power mode is used in this code (extra modifications)
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+  sleep_enable();
+
+  // pump & servo off mode
+  digitalWrite(pumpPin, LOW);
+  servoMotor.write(0);
+
+  // sleep mode On
+  sleep_mode();
+
+  // sleep mode is disabled otherwise
+  sleep_disable();
+}
